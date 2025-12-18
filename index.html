@@ -37,7 +37,7 @@
 
     /* ===== Layout ===== */
     .wrap {
-      min-height: 100%;
+      height: 100vh;                /* IMPORTANT: constrain to viewport */
       display: flex;
       flex-direction: column;
     }
@@ -50,28 +50,32 @@
       letter-spacing: clamp(0px, 0.05vw, 1px);
       line-height: 1.05;
       text-align: center;
+      flex: 0 0 auto;
     }
 
     /* 3-column grid */
     .grid {
       flex: 1;
+      min-height: 0;                /* IMPORTANT */
       display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
+      grid-template-rows: 1fr;      /* IMPORTANT: constrain tile height */
       gap: var(--gap);
       padding: 0 var(--padX) var(--padY);
-      align-items: start;
+      align-items: stretch;         /* IMPORTANT */
     }
 
     /* Tile */
     .tile {
+      height: 100%;                 /* IMPORTANT */
+      min-height: 0;
+      overflow: hidden;             /* IMPORTANT */
       background: rgba(255, 255, 255, 0.06);
       border: 1px solid rgba(255, 255, 255, 0.14);
       border-radius: var(--radius);
       padding: var(--tilePad);
       display: flex;
       flex-direction: column;
-      min-height: 0;
-      overflow: hidden; /* important for fitting */
     }
 
     /* Tap label (Tap 1/2/3) */
@@ -111,9 +115,9 @@
       line-height: 1.35;
       opacity: 0.92;
       white-space: pre-wrap;
-      flex: 1 1 auto;
-      min-height: 0;
-      overflow: hidden;
+      flex: 1 1 auto;              /* IMPORTANT */
+      min-height: 0;               /* IMPORTANT */
+      overflow: hidden;            /* IMPORTANT: enables fitting check */
     }
 
     /* Status / debug badge */
@@ -123,6 +127,7 @@
       bottom: clamp(10px, 1vw, 18px);
       font-size: clamp(11px, 0.9vw, 14px);
       opacity: 0.65;
+      z-index: 9998;
     }
 
     /* Invisible fullscreen trigger */
@@ -137,8 +142,15 @@
 
     /* Small-screen fallback */
     @media (max-width: 900px) {
-      .grid { grid-template-columns: 1fr; }
       body { overflow: auto; }
+      .wrap { height: auto; }
+      .grid {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto;
+        min-height: initial;
+      }
+      .tile { height: auto; overflow: visible; }
+      .tile p { overflow: visible; }
     }
   </style>
 </head>
@@ -192,26 +204,22 @@
     const setStatus = (msg) => statusEl.textContent = msg;
 
     async function loadTap(tap) {
-      // Load title
       const titleRes = await fetch(`/${tap.base}/Title.txt?v=${Date.now()}`, { cache: "no-store" });
       if (!titleRes.ok) throw new Error(`Missing ${tap.base}/Title.txt`);
       document.getElementById(tap.titleId).textContent = (await titleRes.text()).trim();
 
-      // Load text
       const textRes = await fetch(`/${tap.base}/Text.txt?v=${Date.now()}`, { cache: "no-store" });
       if (!textRes.ok) throw new Error(`Missing ${tap.base}/Text.txt`);
       document.getElementById(tap.textId).textContent = (await textRes.text()).trim();
 
-      // Load image
       const img = document.getElementById(tap.imgId);
       img.onerror = () => setStatus(`❌ Image failed: /${tap.base}/Image.jpeg`);
       img.src = `/${tap.base}/Image.jpeg`;
-      await img.decode?.().catch(() => {}); // best-effort
+      await img.decode?.().catch(() => {});
     }
 
     // ===== Dynamic text fitting =====
-    // Shrinks (1) content title and (2) content body text so the tile doesn't overflow.
-    // We do NOT shrink the "Tap 1/2/3" label.
+    // Shrinks only: (1) content title and (2) body text. Does NOT shrink Tap 1/2/3 label.
     function fitTileText(tileEl, { minTitlePx = 16, minBodyPx = 12 } = {}) {
       const contentTitle = tileEl.querySelector("h2.content-title");
       const body = tileEl.querySelector("p");
@@ -221,7 +229,7 @@
       contentTitle.style.fontSize = "";
       body.style.fontSize = "";
 
-      const maxIter = 90;
+      const maxIter = 140;
       const stepPx = 1;
 
       const getPx = (el) => parseFloat(getComputedStyle(el).fontSize);
@@ -229,12 +237,13 @@
       let titleSize = getPx(contentTitle);
       let bodySize  = getPx(body);
 
-      if (tileEl.scrollHeight <= tileEl.clientHeight + 1) return;
+      const bodyOverflows = () => body.scrollHeight > body.clientHeight + 1;
+
+      if (!bodyOverflows()) return;
 
       for (let i = 0; i < maxIter; i++) {
-        if (tileEl.scrollHeight <= tileEl.clientHeight + 1) break;
+        if (!bodyOverflows()) break;
 
-        // shrink body first, then content title
         if (bodySize > minBodyPx) {
           bodySize -= stepPx;
           body.style.fontSize = bodySize + "px";
@@ -265,10 +274,12 @@
         setStatus("Loading…");
         for (const tap of taps) await loadTap(tap);
 
-        // Let layout settle before fitting
+        // Let layout settle before fitting (two frames is more reliable on PCs)
         requestAnimationFrame(() => {
-          fitAllTiles();
-          setStatus("Updated: " + new Date().toLocaleString());
+          requestAnimationFrame(() => {
+            fitAllTiles();
+            setStatus("Updated: " + new Date().toLocaleString());
+          });
         });
       } catch (e) {
         setStatus("ERROR: " + (e?.message || e));
