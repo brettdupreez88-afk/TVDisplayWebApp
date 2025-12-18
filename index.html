@@ -8,18 +8,31 @@
   <style>
     /* ===== Reset ===== */
     *, *::before, *::after { box-sizing: border-box; }
-
-    html, body {
-      height: 100%;
-      margin: 0;
-    }
-
+    html, body { height: 100%; margin: 0; }
     body {
       background: #000;
       color: #fff;
       font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
                    Roboto, Helvetica, Arial, sans-serif;
       overflow: hidden;
+    }
+
+    /* ===== Responsive sizing tokens ===== */
+    :root{
+      --padX: clamp(18px, 3vw, 56px);
+      --padY: clamp(18px, 3vw, 56px);
+      --gap: clamp(12px, 1.6vw, 28px);
+      --radius: clamp(14px, 1.2vw, 24px);
+
+      --titleSize: clamp(28px, 3.2vw, 64px);
+
+      --tilePad: clamp(12px, 1.2vw, 22px);
+      --tapLabelSize: clamp(18px, 1.6vw, 34px);
+
+      --tileTitleSize: clamp(18px, 1.7vw, 40px);
+      --tileTextSize: clamp(14px, 1.25vw, 30px);
+
+      --imgH: clamp(210px, 34vh, 520px);
     }
 
     /* ===== Layout ===== */
@@ -31,66 +44,84 @@
 
     /* Page title */
     .top {
-      padding: 28px 48px 18px;
-      font-size: 48px;
+      padding: calc(var(--padY) * 0.7) var(--padX) calc(var(--padY) * 0.4);
+      font-size: var(--titleSize);
       font-weight: 800;
-      letter-spacing: 0.5px;
+      letter-spacing: clamp(0px, 0.05vw, 1px);
+      line-height: 1.05;
+      text-align: center;
     }
 
-    /* Grid holding the 3 tiles */
+    /* 3-column grid */
     .grid {
       flex: 1;
       display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 24px;
-      padding: 0 48px 48px;
+      gap: var(--gap);
+      padding: 0 var(--padX) var(--padY);
       align-items: start;
     }
 
-    /* Individual tile */
+    /* Tile */
     .tile {
       background: rgba(255, 255, 255, 0.06);
       border: 1px solid rgba(255, 255, 255, 0.14);
-      border-radius: 20px;
-      padding: 18px;
+      border-radius: var(--radius);
+      padding: var(--tilePad);
       display: flex;
       flex-direction: column;
+      min-height: 0;
+      overflow: hidden; /* important for fitting */
+    }
+
+    /* Tap label (Tap 1/2/3) */
+    .tap-label {
+      margin: 0 0 clamp(10px, 1vw, 16px);
+      font-size: var(--tapLabelSize);
+      font-weight: 800;
+      text-align: center;
+      line-height: 1.1;
+      flex: 0 0 auto;
     }
 
     /* Image */
     .img {
       width: 100%;
-      height: 36vh;
-      max-height: 420px;
+      height: var(--imgH);
       object-fit: cover;
-      border-radius: 14px;
-      margin-bottom: 14px;
+      border-radius: calc(var(--radius) * 0.75);
+      margin-bottom: clamp(10px, 0.9vw, 16px);
       display: block;
+      flex: 0 0 auto;
     }
 
-    /* Tile title */
-    .tile h2 {
-      margin: 0 0 10px;
-      font-size: 30px;
-      font-weight: 700;
-      line-height: 1.15;
+    /* Content title (from Title.txt) */
+    .tile h2.content-title {
+      margin: 0 0 clamp(6px, 0.7vw, 12px);
+      font-size: var(--tileTitleSize);
+      font-weight: 750;
+      line-height: 1.12;
+      flex: 0 0 auto;
     }
 
-    /* Tile text */
+    /* Content text (from Text.txt) */
     .tile p {
       margin: 0;
-      font-size: 22px;
+      font-size: var(--tileTextSize);
       line-height: 1.35;
       opacity: 0.92;
       white-space: pre-wrap;
+      flex: 1 1 auto;
+      min-height: 0;
+      overflow: hidden;
     }
 
-    /* Status badge */
+    /* Status / debug badge */
     .badge {
       position: fixed;
-      right: 20px;
-      bottom: 14px;
-      font-size: 14px;
+      right: clamp(12px, 1.2vw, 22px);
+      bottom: clamp(10px, 1vw, 18px);
+      font-size: clamp(11px, 0.9vw, 14px);
       opacity: 0.65;
     }
 
@@ -107,37 +138,39 @@
     /* Small-screen fallback */
     @media (max-width: 900px) {
       .grid { grid-template-columns: 1fr; }
-      .top { font-size: 36px; padding: 20px 24px 12px; }
+      body { overflow: auto; }
     }
   </style>
 </head>
 
 <body>
-  <!-- Invisible fullscreen trigger (press OK once on TV) -->
+  <!-- Press OK/Enter once on TV to request fullscreen (browser security requires a user gesture) -->
   <button id="fsBtn" aria-label="Enter fullscreen"></button>
 
   <div class="wrap">
-    <div id="pageTitle" class="top" style="text-align: center;">What's On Tap</div>
+    <!-- Page title -->
+    <div id="pageTitle" class="top">What's On Tap</div>
 
+    <!-- 3-column grid -->
     <div class="grid">
-      <div class="tile">
-	<h2 id="tap1" style="text-align: center;">Tap 1</h2>
+      <div class="tile" id="tile1">
+        <h2 id="tap1" class="tap-label">Tap 1</h2>
         <img id="img1" class="img" alt="">
-        <h2 id="t1"></h2>
+        <h2 id="t1" class="content-title"></h2>
         <p id="p1"></p>
       </div>
 
-      <div class="tile">
-	<h2 id="tap2" style="text-align: center;">Tap 2</h2>
+      <div class="tile" id="tile2">
+        <h2 id="tap2" class="tap-label">Tap 2</h2>
         <img id="img2" class="img" alt="">
-        <h2 id="t2"></h2>
+        <h2 id="t2" class="content-title"></h2>
         <p id="p2"></p>
       </div>
 
-      <div class="tile">
-	<h2 id="tap3" style="text-align: center;">Tap 3</h2>
+      <div class="tile" id="tile3">
+        <h2 id="tap3" class="tap-label">Tap 3</h2>
         <img id="img3" class="img" alt="">
-        <h2 id="t3"></h2>
+        <h2 id="t3" class="content-title"></h2>
         <p id="p3"></p>
       </div>
     </div>
@@ -148,36 +181,97 @@
   <script>
     const REFRESH_MINUTES = 60;
 
+    // Each folder contains: Image.jpeg, Title.txt, Text.txt
     const taps = [
-      { base: "tap1", titleId: "t1", textId: "p1", imgId: "img1" },
-      { base: "tap2", titleId: "t2", textId: "p2", imgId: "img2" },
-      { base: "tap3", titleId: "t3", textId: "p3", imgId: "img3" }
+      { base: "tap1", tileId: "tile1", titleId: "t1", textId: "p1", imgId: "img1" },
+      { base: "tap2", tileId: "tile2", titleId: "t2", textId: "p2", imgId: "img2" },
+      { base: "tap3", tileId: "tile3", titleId: "t3", textId: "p3", imgId: "img3" }
     ];
 
     const statusEl = document.getElementById("status");
     const setStatus = (msg) => statusEl.textContent = msg;
 
     async function loadTap(tap) {
-      const titleRes = await fetch(`/${tap.base}/Title.txt?v=${Date.now()}`);
+      // Load title
+      const titleRes = await fetch(`/${tap.base}/Title.txt?v=${Date.now()}`, { cache: "no-store" });
       if (!titleRes.ok) throw new Error(`Missing ${tap.base}/Title.txt`);
-      document.getElementById(tap.titleId).textContent = await titleRes.text();
+      document.getElementById(tap.titleId).textContent = (await titleRes.text()).trim();
 
-      const textRes = await fetch(`/${tap.base}/Text.txt?v=${Date.now()}`);
+      // Load text
+      const textRes = await fetch(`/${tap.base}/Text.txt?v=${Date.now()}`, { cache: "no-store" });
       if (!textRes.ok) throw new Error(`Missing ${tap.base}/Text.txt`);
-      document.getElementById(tap.textId).textContent = await textRes.text();
+      document.getElementById(tap.textId).textContent = (await textRes.text()).trim();
 
+      // Load image
       const img = document.getElementById(tap.imgId);
       img.onerror = () => setStatus(`❌ Image failed: /${tap.base}/Image.jpeg`);
       img.src = `/${tap.base}/Image.jpeg`;
+      await img.decode?.().catch(() => {}); // best-effort
     }
+
+    // ===== Dynamic text fitting =====
+    // Shrinks (1) content title and (2) content body text so the tile doesn't overflow.
+    // We do NOT shrink the "Tap 1/2/3" label.
+    function fitTileText(tileEl, { minTitlePx = 16, minBodyPx = 12 } = {}) {
+      const contentTitle = tileEl.querySelector("h2.content-title");
+      const body = tileEl.querySelector("p");
+      if (!contentTitle || !body) return;
+
+      // Reset inline sizes so clamp() provides baseline
+      contentTitle.style.fontSize = "";
+      body.style.fontSize = "";
+
+      const maxIter = 90;
+      const stepPx = 1;
+
+      const getPx = (el) => parseFloat(getComputedStyle(el).fontSize);
+
+      let titleSize = getPx(contentTitle);
+      let bodySize  = getPx(body);
+
+      if (tileEl.scrollHeight <= tileEl.clientHeight + 1) return;
+
+      for (let i = 0; i < maxIter; i++) {
+        if (tileEl.scrollHeight <= tileEl.clientHeight + 1) break;
+
+        // shrink body first, then content title
+        if (bodySize > minBodyPx) {
+          bodySize -= stepPx;
+          body.style.fontSize = bodySize + "px";
+        } else if (titleSize > minTitlePx) {
+          titleSize -= stepPx;
+          contentTitle.style.fontSize = titleSize + "px";
+        } else {
+          break;
+        }
+      }
+    }
+
+    function fitAllTiles() {
+      for (const tap of taps) {
+        const tile = document.getElementById(tap.tileId);
+        if (tile) fitTileText(tile, { minTitlePx: 16, minBodyPx: 12 });
+      }
+    }
+
+    let resizeTimer = null;
+    window.addEventListener("resize", () => {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(fitAllTiles, 200);
+    });
 
     async function loadAll() {
       try {
         setStatus("Loading…");
         for (const tap of taps) await loadTap(tap);
-        setStatus("Updated: " + new Date().toLocaleString());
+
+        // Let layout settle before fitting
+        requestAnimationFrame(() => {
+          fitAllTiles();
+          setStatus("Updated: " + new Date().toLocaleString());
+        });
       } catch (e) {
-        setStatus("ERROR: " + e.message);
+        setStatus("ERROR: " + (e?.message || e));
         console.error(e);
       }
     }
@@ -185,7 +279,7 @@
     loadAll();
     setInterval(loadAll, REFRESH_MINUTES * 60 * 1000);
 
-    /* ===== Fullscreen handling ===== */
+    // ===== Fullscreen handling (requires user gesture) =====
     function requestFullscreen() {
       const el = document.documentElement;
       if (el.requestFullscreen) el.requestFullscreen();
