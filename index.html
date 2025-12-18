@@ -1,1 +1,201 @@
-<!doctype html><html lang="en"><head>  <meta charset="utf-8" />  <meta name="viewport" content="width=device-width, initial-scale=1" />  <title>TV Display</title>  <style>    /* ===== Base reset ===== */    *, *::before, *::after { box-sizing: border-box; }    html, body {      height: 100%;      margin: 0;    }    body {      background: #000;      color: #fff;      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",                   Roboto, Helvetica, Arial, sans-serif;    }    /* ===== Layout ===== */    .wrap {      min-height: 100%;      display: flex;      flex-direction: column;    }    /* Page title */    .top {      padding: 28px 48px 18px;      font-size: 48px;      font-weight: 800;      letter-spacing: 0.5px;    }    /* Grid holding the 3 tiles */    .grid {      flex: 1;      display: grid;      grid-template-columns: repeat(3, minmax(0, 1fr));      gap: 24px;      padding: 0 48px 48px;      align-items: start;    }    /* Individual tile */    .tile {      background: rgba(255, 255, 255, 0.06);      border: 1px solid rgba(255, 255, 255, 0.14);      border-radius: 20px;      padding: 18px;      display: flex;      flex-direction: column;    }    /* Image */    .img {      width: 100%;      height: 36vh;      max-height: 420px;      object-fit: cover;      border-radius: 14px;      margin-bottom: 14px;      display: block;    }    /* Tile title */    .tile h2 {      margin: 0 0 10px;      font-size: 30px;      font-weight: 700;      line-height: 1.15;    }    /* Tile text */    .tile p {      margin: 0;      font-size: 22px;      line-height: 1.35;      opacity: 0.92;      white-space: pre-wrap;    }    /* Status / debug badge */    .badge {      position: fixed;      right: 20px;      bottom: 14px;      font-size: 14px;      opacity: 0.65;    }    /* ===== Responsive fallback (only stack on small screens) ===== */    @media (max-width: 900px) {      .top {        font-size: 36px;        padding: 20px 24px 12px;      }      .grid {        grid-template-columns: 1fr;        padding: 0 24px 24px;      }      .img {        height: 40vh;      }    }  </style></head><body>  <div class="wrap">    <!-- Page title -->    <div id="pageTitle" class="top" style="text-align: center;">What's On Tap</div>    <!-- 3-column grid -->    <div class="grid">      <div class="tile">	<h2 id="tap1" style="text-align: center;">Tap 1</h2>        <img id="img1" class="img" alt="">        <h2 id="t1"></h2>        <p id="p1"></p>      </div>      <div class="tile">	<h2 id="tap2" style="text-align: center;">Tap 2</h2>        <img id="img2" class="img" alt="">        <h2 id="t2"></h2>        <p id="p2"></p>      </div>      <div class="tile">	<h2 id="tap3" style="text-align: center;">Tap 3</h2>        <img id="img3" class="img" alt="">        <h2 id="t3"></h2>        <p id="p3"></p>      </div>    </div>  </div>  <div id="status" class="badge"></div><script>  const REFRESH_MINUTES = 60;  const taps = [    { base: "tap1", titleId: "t1", textId: "p1", imgId: "img1" },    { base: "tap2", titleId: "t2", textId: "p2", imgId: "img2" },    { base: "tap3", titleId: "t3", textId: "p3", imgId: "img3" }  ];  const setStatus = (msg) =>    document.getElementById("status").textContent = msg;  async function loadTap(tap) {    // Title    const titleRes = await fetch(`/${tap.base}/Title.txt?v=${Date.now()}`);    if (!titleRes.ok) throw new Error(`Missing ${tap.base}/Title.txt`);    document.getElementById(tap.titleId).textContent =      await titleRes.text();    // Text    const textRes = await fetch(`/${tap.base}/Text.txt?v=${Date.now()}`);    if (!textRes.ok) throw new Error(`Missing ${tap.base}/Text.txt`);    document.getElementById(tap.textId).textContent =      await textRes.text();    // Image    const img = document.getElementById(tap.imgId);    img.onerror = () =>      setStatus(`❌ Image failed: /${tap.base}/Image.jpeg`);    img.src = `/${tap.base}/Image.jpeg`;  }  async function loadAll() {    try {      setStatus("Loading…");      for (const tap of taps) {        await loadTap(tap);      }      setStatus("Updated: " + new Date().toLocaleString());    } catch (e) {      setStatus("ERROR: " + e.message);      console.error(e);    }  }  loadAll();  setInterval(loadAll, REFRESH_MINUTES * 60 * 1000);</script></body></html>
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>TV Display</title>
+
+  <style>
+    /* ===== Reset ===== */
+    *, *::before, *::after { box-sizing: border-box; }
+
+    html, body {
+      height: 100%;
+      margin: 0;
+    }
+
+    body {
+      background: #000;
+      color: #fff;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+                   Roboto, Helvetica, Arial, sans-serif;
+      overflow: hidden;
+    }
+
+    /* ===== Layout ===== */
+    .wrap {
+      min-height: 100%;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Page title */
+    .top {
+      padding: 28px 48px 18px;
+      font-size: 48px;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+    }
+
+    /* Grid holding the 3 tiles */
+    .grid {
+      flex: 1;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 24px;
+      padding: 0 48px 48px;
+      align-items: start;
+    }
+
+    /* Individual tile */
+    .tile {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 20px;
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Image */
+    .img {
+      width: 100%;
+      height: 36vh;
+      max-height: 420px;
+      object-fit: cover;
+      border-radius: 14px;
+      margin-bottom: 14px;
+      display: block;
+    }
+
+    /* Tile title */
+    .tile h2 {
+      margin: 0 0 10px;
+      font-size: 30px;
+      font-weight: 700;
+      line-height: 1.15;
+    }
+
+    /* Tile text */
+    .tile p {
+      margin: 0;
+      font-size: 22px;
+      line-height: 1.35;
+      opacity: 0.92;
+      white-space: pre-wrap;
+    }
+
+    /* Status badge */
+    .badge {
+      position: fixed;
+      right: 20px;
+      bottom: 14px;
+      font-size: 14px;
+      opacity: 0.65;
+    }
+
+    /* Invisible fullscreen trigger */
+    #fsBtn {
+      position: fixed;
+      inset: 0;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      z-index: 9999;
+    }
+
+    /* Small-screen fallback */
+    @media (max-width: 900px) {
+      .grid { grid-template-columns: 1fr; }
+      .top { font-size: 36px; padding: 20px 24px 12px; }
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Invisible fullscreen trigger (press OK once on TV) -->
+  <button id="fsBtn" aria-label="Enter fullscreen"></button>
+
+  <div class="wrap">
+    <div id="pageTitle" class="top" style="text-align: center;">What's On Tap</div>
+
+    <div class="grid">
+      <div class="tile">
+	<h2 id="tap1" style="text-align: center;">Tap 1</h2>
+        <img id="img1" class="img" alt="">
+        <h2 id="t1"></h2>
+        <p id="p1"></p>
+      </div>
+
+      <div class="tile">
+	<h2 id="tap2" style="text-align: center;">Tap 2</h2>
+        <img id="img2" class="img" alt="">
+        <h2 id="t2"></h2>
+        <p id="p2"></p>
+      </div>
+
+      <div class="tile">
+	<h2 id="tap3" style="text-align: center;">Tap 3</h2>
+        <img id="img3" class="img" alt="">
+        <h2 id="t3"></h2>
+        <p id="p3"></p>
+      </div>
+    </div>
+  </div>
+
+  <div id="status" class="badge"></div>
+
+  <script>
+    const REFRESH_MINUTES = 60;
+
+    const taps = [
+      { base: "tap1", titleId: "t1", textId: "p1", imgId: "img1" },
+      { base: "tap2", titleId: "t2", textId: "p2", imgId: "img2" },
+      { base: "tap3", titleId: "t3", textId: "p3", imgId: "img3" }
+    ];
+
+    const statusEl = document.getElementById("status");
+    const setStatus = (msg) => statusEl.textContent = msg;
+
+    async function loadTap(tap) {
+      const titleRes = await fetch(`/${tap.base}/Title.txt?v=${Date.now()}`);
+      if (!titleRes.ok) throw new Error(`Missing ${tap.base}/Title.txt`);
+      document.getElementById(tap.titleId).textContent = await titleRes.text();
+
+      const textRes = await fetch(`/${tap.base}/Text.txt?v=${Date.now()}`);
+      if (!textRes.ok) throw new Error(`Missing ${tap.base}/Text.txt`);
+      document.getElementById(tap.textId).textContent = await textRes.text();
+
+      const img = document.getElementById(tap.imgId);
+      img.onerror = () => setStatus(`❌ Image failed: /${tap.base}/Image.jpeg`);
+      img.src = `/${tap.base}/Image.jpeg`;
+    }
+
+    async function loadAll() {
+      try {
+        setStatus("Loading…");
+        for (const tap of taps) await loadTap(tap);
+        setStatus("Updated: " + new Date().toLocaleString());
+      } catch (e) {
+        setStatus("ERROR: " + e.message);
+        console.error(e);
+      }
+    }
+
+    loadAll();
+    setInterval(loadAll, REFRESH_MINUTES * 60 * 1000);
+
+    /* ===== Fullscreen handling ===== */
+    function requestFullscreen() {
+      const el = document.documentElement;
+      if (el.requestFullscreen) el.requestFullscreen();
+      else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
+    }
+
+    document.getElementById("fsBtn").addEventListener("click", () => {
+      requestFullscreen();
+      document.getElementById("fsBtn").remove();
+    });
+  </script>
+</body>
+</html>
