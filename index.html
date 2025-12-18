@@ -213,7 +213,7 @@
       document.getElementById(tap.textId).textContent = (await textRes.text()).trim();
 
       const img = document.getElementById(tap.imgId);
-      img.onerror = () => setStatus(`❌ Image failed: /${tap.base}/Image.jpeg`);
+      img.onerror = () => setStatus(`❌ Image failed: /${tap.base}/Image.png`);
       img.src = `/${tap.base}/Image.jpeg`;
       await img.decode?.().catch(() => {});
     }
