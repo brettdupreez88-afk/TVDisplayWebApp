@@ -1,0 +1,17 @@
+{
+  "title": "December Specials",
+  "slides": [
+    {
+      "heading": "New Treatment Launch",
+      "text": "Book now and get 10% off.",
+      "image": "https://example.com/images/slide1.jpg",
+      "durationSec": 12
+    },
+    {
+      "heading": "Holiday Hours",
+      "text": "Closed 25–26 Dec. Open from 27 Dec.",
+      "image": "https://example.com/images/slide2.jpg",
+      "durationSec": 12
+    }
+  ]
+}
