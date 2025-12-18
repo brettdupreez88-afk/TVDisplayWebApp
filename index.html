@@ -193,7 +193,7 @@
   <script>
     const REFRESH_MINUTES = 60;
 
-    // Each folder contains: Image.jpeg, Title.txt, Text.txt
+    // Each folder contains: Image.png, Title.txt, Text.txt
     const taps = [
       { base: "tap1", tileId: "tile1", titleId: "t1", textId: "p1", imgId: "img1" },
       { base: "tap2", tileId: "tile2", titleId: "t2", textId: "p2", imgId: "img2" },
@@ -214,7 +214,7 @@
 
       const img = document.getElementById(tap.imgId);
       img.onerror = () => setStatus(`❌ Image failed: /${tap.base}/Image.png`);
-      img.src = `/${tap.base}/Image.jpeg`;
+      img.src = `/${tap.base}/Image.png`;
       await img.decode?.().catch(() => {});
     }
 
